@@ -1,39 +1,100 @@
-# third_party_EGL
+# EGL-Registry
 
-#### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+The EGL-Registry repository contains the EGL API and Extension Registry,
+including specifications, reference pages and reference cards, and the
+enumerant registry. It is also used as a backing store for the web view of
+the registry at https://www.khronos.org/registry/egl/ ; commits to the
+master branch of this repository will be reflected there.
 
-#### 软件架构
-软件架构说明
+In the past, the EGL registry was maintained in a public Subversion
+repository. The history in that repository has not been imported to github,
+but it is still available at
+https://cvs.khronos.org/svn/repos/registry/trunk/public/egl/ .
+
+Interesting files in this repository include:
+
+* index.php - toplevel index page for the web view. This relies on PHP
+  include files found elsewhere on www.khronos.org and so is not very useful
+  in isolation.
+* registry.tcl - extension number registry. Documents the names and index
+  numbers assigned to EGL extension specifications.
+* api/egl.xml - extension enumerant and API registry. Defines the EGL API,
+  including extensions, and is used to generate headers. Documents the EGL
+  enumerant ranges assigned to different vendors.
+* api/EGL/ and api/KHR/ - header files used by an EGL implementation.
+  EGL/eglext.h and EGL/egl.h are generated from egl.xml. The other headers
+  are handcoded and express OS and window system (platform) dependencies.
+* extensions/ - EGL extension specifications, grouped into vendor-specific
+  subdirectories.
+* sdk/ - EGL reference pages and reference cards. There are separate sets
+  for each API version.
+* specs/ - EGL specification documents.
+
+## Reserving EGL Enumerant Ranges
+
+EGL enumerants are documented in api/egl.xml . New ranges can be allocated
+by proposing a pull request to master modifying this file, following the
+existing examples. Allocate ranges starting at the lowest free values
+available (search for "Reservable for future use"). Ranges are not
+officially allocated until your pull request is *accepted* into master. At
+that point you can use values from your assigned range for API extensions.
 
 
-#### 安装教程
+## Adding Extension Specifications
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+Extension specification documents can be added by proposing a pull request
+to master, adding the specification .txt file and related changes under
+extensions/\<vendor\>/filename.txt. Your pull request must also:
 
-#### 使用说明
+* Allocate an extension number in registry.tcl (follow the existing
+  ```<extension>``` examples, search for "Next free extension number", and use
+  the lowest available extension number).
+* Include that extension number in the extension specification document.
+* Define the interfaces introduced by this extension in api/egl.xml,
+  following the examples of existing extensions. If you have difficulty
+  doing this, consult the registry schema documentation in the GL registry
+  at www.khronos.org/registry/gl/; you may also create Issues in the
+  EGL-Registry repository to request help.
+* Verify that the EGL headers regenerate properly after applying your XML
+  changes. In the api/ directory, you must be able to do the following without
+  errors:
+```
+    # Validate XML changes
+    make validate
+    # Verify headers build and are legal C
+    make clobber
+    make
+    make tests
+```
+* Finally, add a link from the extensions section of index.php to the
+  extension document, using the specified extension number, so it shows up
+  in the web view (this could in principle be generated automatically from
+  registry.tcl / egl.xml, but isn't at present).
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+Sometimes extension text files contain inappropriate UTF-8 characters. They
+should be restricted to the ASCII subset of UTF-8 at present. They can be
+removed using the iconv Linux command-line tool via
 
-#### 参与贡献
+    iconv -c -f utf-8 -t ascii filename.txt
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+(see internal Bugzilla issue 16141 for more).
+
+We may transition to an asciidoc-based extension specification format at
+some point.
 
 
-#### 特技
+## Build Tools
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+This section is not complete (see https://github.com/KhronosGroup/EGL-Registry/issues/92).
+
+To validate the XML and build the headers you will need at least GNU make,
+'jing' for the 'make validate' step (https://relaxng.org/jclark/jing.html),
+and Python 3.5 and the lxml.etree Python library
+(https://pypi.org/project/lxml/) for the 'make' step. The 'make tests' step
+requires whatever the C and C++ compilers configured for GNU make are,
+usually gcc and g++.
+
+All of these components are available prepackaged for major Linux
+distributions and for the Windows 10 Debian WSL.
+
+
